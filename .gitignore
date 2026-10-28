@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+external/
+work/
+logs/
+ada_bundle.tar.gz
+*.tar.gz

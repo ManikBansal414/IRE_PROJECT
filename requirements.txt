@@ -1,0 +1,12 @@
+torch
+bm25s
+PyStemmer
+sentence-transformers
+transformers
+sentencepiece
+protobuf
+faiss-cpu
+pytrec_eval-terrier
+pandas
+tqdm
+pyyaml
