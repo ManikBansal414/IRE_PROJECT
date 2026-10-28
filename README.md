@@ -13,16 +13,31 @@ from the domain corpus (ClapNQ, Cloud, FiQA, Govt). Ranked by nDCG; scored on an
 | 4 | BM25, T5-CANARD rewrite | 0.189 | 0.184 | 0.207 | 0.237 | 0.304 |
 | 5 | BM25, weighted history (last question ×2 + previous 2) | 0.197 | 0.188 | 0.211 | 0.241 | 0.310 |
 | 6 | RRF of BM25 runs (#4 + #5 + #1) | 0.206 | 0.192 | 0.219 | 0.250 | 0.321 |
-| **7** | **#6 + MiniLM cross-encoder rerank of top 50** | **0.349** | **0.313** | **0.334** | **0.366** | **0.427** |
+| 7 | #6 + MiniLM cross-encoder rerank of top 50 | 0.349 | 0.313 | 0.334 | 0.366 | 0.427 |
+| 8 | Dense (BGE-base-en-v1.5), last question | 0.323 | 0.305 | 0.327 | 0.370 | 0.456 |
+| 9 | Dense, T5-CANARD rewrite | 0.345 | 0.322 | 0.348 | 0.393 | 0.485 |
+| 10 | Dense, weighted history | 0.224 | 0.221 | 0.252 | 0.288 | 0.371 |
+| 11 | RRF hybrid: dense #9 + #10, BM25 #4 + #5 | 0.308 | 0.282 | 0.312 | 0.362 | 0.464 |
+| 12 | #11 + bge-reranker-base rerank of top 100 | 0.288 | 0.287 | 0.317 | 0.360 | 0.455 |
+| 13 | RRF hybrid: dense #9 + #8, BM25 #4 + #5 + #1 | 0.306 | 0.282 | 0.312 | 0.353 | 0.442 |
+| 14 | #9 + MiniLM rerank of top 50 | 0.378 | 0.350 | 0.384 | 0.428 | 0.522 |
+| **15** | **#13 + MiniLM rerank of top 50 (best)** | **0.391** | **0.354** | **0.386** | **0.432** | **0.521** |
 | — | *BM25 on gold human rewrites (upper bound only, not available at test time)* | 0.203 | 0.196 | 0.216 | 0.254 | 0.330 |
 
 Per-domain numbers: [results/results_log.md](results/results_log.md) and `results/*.metrics.json`.
-Submission-format output for #7: `results/bm25rrf3__rr_minilm50.predictions.jsonl`
-(passes the official `format_checker.py --mode retrieval_taska`).
+Submission-format output for the best system (#15): `results/hybrid5__rr_minilm50.predictions.jsonl`;
+BM25-only (#7): `results/bm25rrf3__rr_minilm50.predictions.jsonl`. Both pass the official
+`format_checker.py --mode retrieval_taska`.
 
-**In progress (ADA GPU):** dense retrieval (BGE-base), hybrid BM25 + dense via RRF, and a stronger
-reranker (bge-reranker-base). On the laptop CPU dense encoding ran at ~8 passages/s (~12 h for the
-366k passages), so it is run on ADA instead.
+Observations:
+- Dense retrieval beats BM25 by a wide margin (0.370 vs 0.224 on the last question alone).
+- The T5 rewrite helps both retrievers; the "weighted history" query helps BM25 but hurts dense.
+- RRF fusion by itself does not beat the best single dense run, but the fused candidate pool
+  gives the reranker the most to work with (#15 > #14).
+- bge-reranker-base lowered scores here, while the smaller MS MARCO MiniLM cross-encoder adds ~+0.04–0.12.
+
+Rows #8–#15 were run on ADA (GPU); on the laptop CPU, dense encoding ran at ~8 passages/s
+(~12 h for the 366k passages) vs ~68 passages/s on a GTX 1080 Ti.
 
 ## Pipeline
 
@@ -68,5 +83,7 @@ python -m taska.run --sources bm25@$RW bm25@weighted bm25@last \
 On a new test file: `python -m taska.run --input <test.jsonl> ... --write`.
 
 ### ADA (IIIT-H cluster)
-`ada/setup_env.sh` (one-time, login node), `ada/encode_dense.sbatch`, `ada/run_pipeline.sbatch`.
-Account limits: 1 GPU, 10 CPUs, 6 h per job, 1 running job.
+`ada/setup_env.sh` (one-time, login node), then `sbatch ada/full_run.sbatch` (encodes all corpora,
+~90 min, then runs `ada/run_pipeline.sbatch`), then `sbatch ada/extra_runs.sbatch` (MiniLM-reranked
+runs #13–#15). Account limits: 1 GPU, 10 CPUs, 6 h per job, only 1 submitted job at a time
+(so jobs cannot be chained with `--dependency`).
