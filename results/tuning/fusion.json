@@ -1,0 +1,59 @@
+{
+ "bm25_params": "k1=2.2_b=0.5",
+ "nDCG@10": {
+  "final": {
+   "w": {
+    "bge-base@t5": 2,
+    "bm25@last": 1,
+    "bge-base@last": 1.5,
+    "bge-base@last2": 0.5,
+    "bm25@last2": 0.25,
+    "bge-base@weighted": 0.25,
+    "bm25@weighted": 0.25,
+    "bm25@all": 0.5
+   },
+   "k": 5,
+   "depth": 100
+  },
+  "final_score": 0.442913686443664,
+  "cv_heldout": 0.43383837989032326,
+  "hybrid5": 0.35928704716302595,
+  "dense_t5": 0.3932113560552546,
+  "chosen_per_fold": [
+   "{bge-base@all\u00d70.25, bge-base@last\u00d73, bge-base@last2\u00d71, bge-base@t5\u00d73, bge-base@weighted\u00d71, bm25@last\u00d72, bm25@last2\u00d70.5, bm25@t5\u00d70.25, bm25@weighted\u00d70.25} k=10 depth=100",
+   "{bge-base@last\u00d71, bge-base@last2\u00d70.5, bge-base@t5\u00d71, bge-base@weighted\u00d70.25, bm25@last\u00d70.5, bm25@last2\u00d70.25} k=5 depth=100",
+   "{bge-base@all\u00d70.25, bge-base@last\u00d72, bge-base@last2\u00d70.5, bge-base@t5\u00d73, bge-base@weighted\u00d70.5, bm25@last\u00d72} k=10 depth=100",
+   "{bge-base@last\u00d72, bge-base@last2\u00d71, bge-base@t5\u00d72, bge-base@weighted\u00d70.5, bm25@all\u00d70.25, bm25@last\u00d71, bm25@t5\u00d70.25, bm25@weighted\u00d70.25} k=5 depth=100",
+   "{bge-base@all\u00d71, bge-base@last\u00d73, bge-base@last2\u00d70.5, bge-base@t5\u00d73, bge-base@weighted\u00d71, bm25@all\u00d70.5, bm25@last\u00d71.5, bm25@last2\u00d70.25, bm25@t5\u00d70.5, bm25@weighted\u00d70.5} k=10 depth=100"
+  ]
+ },
+ "R@50": {
+  "final": {
+   "w": {
+    "bm25@last": 0.25,
+    "bm25@last2": 0.5,
+    "bm25@weighted": 1,
+    "bm25@all": 1,
+    "bm25@t5": 1.5,
+    "bge-base@last": 3,
+    "bge-base@last2": 1,
+    "bge-base@weighted": 1,
+    "bge-base@all": 1.5,
+    "bge-base@t5": 2
+   },
+   "k": 20,
+   "depth": 100
+  },
+  "final_score": 0.7719183469183469,
+  "cv_heldout": 0.7579094400522971,
+  "hybrid5": 0.7094109415537987,
+  "dense_t5": 0.6862663684092256,
+  "chosen_per_fold": [
+   "{bge-base@all\u00d70.5, bge-base@last\u00d71, bge-base@last2\u00d70.25, bge-base@t5\u00d71, bge-base@weighted\u00d70.5, bm25@all\u00d70.25, bm25@last\u00d70.5, bm25@last2\u00d70.25, bm25@t5\u00d70.5} k=30 depth=100",
+   "{bge-base@all\u00d71, bge-base@last\u00d73, bge-base@t5\u00d71.5, bge-base@weighted\u00d71, bm25@all\u00d71, bm25@last\u00d70.5, bm25@last2\u00d70.25, bm25@t5\u00d71, bm25@weighted\u00d71} k=20 depth=100",
+   "{bge-base@all\u00d71, bge-base@last\u00d71, bge-base@last2\u00d70.25, bge-base@t5\u00d71.5, bge-base@weighted\u00d70.5, bm25@all\u00d70.25, bm25@last\u00d70.25, bm25@last2\u00d70.25, bm25@t5\u00d70.5, bm25@weighted\u00d70.25} k=10 depth=100",
+   "{bge-base@all\u00d70.5, bge-base@last\u00d71, bge-base@last2\u00d70.5, bge-base@t5\u00d71, bm25@all\u00d70.25, bm25@last\u00d70.25, bm25@t5\u00d70.25, bm25@weighted\u00d70.5} k=10 depth=100",
+   "{bge-base@all\u00d71, bge-base@last\u00d71, bge-base@t5\u00d71, bm25@last\u00d70.25, bm25@weighted\u00d71} k=20 depth=100"
+  ]
+ }
+}
