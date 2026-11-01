@@ -74,6 +74,7 @@ Data (not committed): download the [MTRAG benchmark](https://github.com/IBM/mt-r
 ```bash
 python -m taska.prepare_inputs                 # -> data/taskA_dev_input.jsonl
 python -m taska.rewrite                        # -> data/rewrites_t5canard.jsonl (already committed)
+python -m taska.run --preset best --write    # tuned system (results/tuning/README.md), nDCG@10 0.502
 RW=file:data/rewrites_t5canard.jsonl
 python -m taska.run --sources bm25@last        # baseline
 python -m taska.run --sources bm25@$RW bm25@weighted bm25@last \
@@ -85,5 +86,5 @@ On a new test file: `python -m taska.run --input <test.jsonl> ... --write`.
 ### ADA (IIIT-H cluster)
 `ada/setup_env.sh` (one-time, login node), then `sbatch ada/full_run.sbatch` (encodes all corpora,
 ~90 min, then runs `ada/run_pipeline.sbatch`), then `sbatch ada/extra_runs.sbatch` (MiniLM-reranked
-runs #13–#15). Account limits: 1 GPU, 10 CPUs, 6 h per job, only 1 submitted job at a time
+runs #13–#15). The tuned system: `sbatch ada/best_run.sbatch`. Account limits: 1 GPU, 10 CPUs, 6 h per job, only 1 submitted job at a time
 (so jobs cannot be chained with `--dependency`).
