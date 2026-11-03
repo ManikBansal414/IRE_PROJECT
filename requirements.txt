@@ -10,3 +10,10 @@ pytrec_eval-terrier
 pandas
 tqdm
 pyyaml
+# Task B: API client, and the official algorithmic metrics (benchmark scripts/evaluation/run_algorithmic.py)
+requests
+evaluate
+bert_score
+rouge-score
+beautifulsoup4
+lxml

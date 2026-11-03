@@ -1,0 +1,18 @@
+# The four algorithmic metrics that make up the official RB_agg (= RB_alg), in the format of
+# scripts/evaluation/config.yaml; the other metrics of that file do not enter the ranking.
+Recall:
+  func: recall
+  prediction: prediction
+  target: target
+RougeL_stemFalse:
+  func: rouge_l
+  prediction: prediction
+  target: target
+BertscoreR:
+  func: bert_recall
+  prediction: prediction
+  target: target
+BertKPrec:
+  func: bert_prec
+  prediction: prediction
+  target: passage
