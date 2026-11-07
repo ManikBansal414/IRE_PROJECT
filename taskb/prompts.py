@@ -17,6 +17,19 @@ VARIANTS = {
     "extractive": BASE + "\n- Reuse the wording of the documents where it answers the question.\n"
                          "- Keep the answer focused, usually 2 to 5 sentences.",
     "concise": BASE + "\n- Answer in 1 to 3 sentences.",
+    # The references are longer than our answers (median 84 vs 72 words): more room for recall-based metrics.
+    "extractive_long": BASE + "\n- Reuse the wording of the documents where it answers the question.\n"
+                              "- Give a complete answer, usually 3 to 6 sentences, covering every relevant detail.",
+    # Partially answerable questions: answer the supported part, then name the missing part in one sentence.
+    "extractive_partial": BASE + "\n- Reuse the wording of the documents where it answers the question.\n"
+                                 "- Keep the answer focused, usually 2 to 5 sentences.\n"
+                                 "- When only part of the question is answered by the documents, first give that part, "
+                                 "then add one sentence saying which part the documents do not cover.",
+    # Task C: passages come from our retriever and may be off-topic, so the IDK case has to be recognised.
+    "extractive_rag": BASE + "\n- Reuse the wording of the documents where it answers the question.\n"
+                             "- Keep the answer focused, usually 2 to 5 sentences.\n"
+                             "- The documents were found by a search engine and may be unrelated to the question. "
+                             f"If none of them contains the answer, reply only: {IDK}",
 }
 
 

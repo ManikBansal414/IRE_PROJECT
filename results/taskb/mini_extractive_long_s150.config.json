@@ -1,0 +1,15 @@
+{
+ "input": "/home/shivek-gupta/Desktop/Sem5/IRE/IRE_PROJECT/external/mt-rag-benchmark/mtrag-human/generation_tasks/reference.jsonl",
+ "model": "gpt-4.1-mini",
+ "provider": "azure",
+ "workers": 8,
+ "prompt": "extractive_long",
+ "temperature": 0.0,
+ "max_tokens": 400,
+ "top_k": null,
+ "sample": 150,
+ "seed": 0,
+ "sample_all": false,
+ "name": "mini_extractive_long_s150",
+ "overwrite": false
+}

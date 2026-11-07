@@ -32,11 +32,13 @@ def load_gold(path=REFERENCE):
                            "domain": COLLECTION_TO_DOMAIN[t["Collection"]]} for t in read_jsonl(path)}
 
 
-def dev_sample(n, seed=0, path=REFERENCE):
-    """Fixed tuning sample of tasks that have passages, stratified by domain and answerability (dev set only)."""
+def dev_sample(n, seed=0, path=REFERENCE, everything=False):
+    """Fixed tuning sample stratified by domain and answerability (dev set only). By default only tasks that have
+    reference passages (Task B: the others get the fixed IDK reply); everything=True also draws the UNANSWERABLE
+    and CONVERSATIONAL tasks (Task C, where retrieval always returns passages)."""
     strata = {}
     for t in read_jsonl(path):
-        if t["contexts"]:
+        if t["contexts"] or everything:
             strata.setdefault((t["Collection"], answerability(t)), []).append(t["task_id"])
     total = sum(map(len, strata.values()))
     rng = random.Random(seed)
