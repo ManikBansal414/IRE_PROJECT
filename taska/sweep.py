@@ -8,8 +8,10 @@ is an unbiased estimate of the tuning procedure. Differences are tested with a p
   python -m taska.sweep fusion    # source weights, RRF k, per-source depth
   python -m taska.sweep pool      # candidate pools for the reranker job -> work/cache/pool{50,100}.json
   python -m taska.sweep rerank    # reranker, query, depth, score interpolation
+  python -m taska.sweep fusion --metric nDCG@5   # same search with another selection metric
 
-Results are written to results/tuning/<step>.md and <step>.json.
+Results are written to results/tuning/<step>.md and <step>.json (<step>_ndcg5.* etc. for --metric nDCG@5).
+With another metric, each step also tests whether the configuration chosen with nDCG@10 is tied with the best.
 """
 import argparse
 import itertools
@@ -37,6 +39,8 @@ DEFAULT_BM25 = "k1=0.9_b=0.4"
 WEIGHTS = [0, 0.25, 0.5, 1, 1.5, 2, 3]
 RRF_K = [1, 2, 3, 5, 10, 20, 30, 60, 100]
 DEPTHS = [20, 30, 50, 100]
+OBJ = "nDCG@10"  # selection metric; set with --metric
+SUFFIX = ""      # result file suffix for another selection metric, e.g. "_ndcg5"
 
 
 # ---------------------------------------------------------------- evaluation
@@ -188,9 +192,21 @@ def near_best(per_query, metric_name, top=15):
 
 def write(step, lines, data):
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / f"{step}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    (OUT / f"{step}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
+    (OUT / f"{step}{SUFFIX}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (OUT / f"{step}{SUFFIX}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
     print("\n".join(lines))
+
+
+def vs_ndcg10_choice(chosen10, scores, best, label):
+    """With another selection metric: is the nDCG@10 choice tied with the best under that metric?"""
+    if not SUFFIX:
+        return []
+    m, lo, hi, p = bootstrap(scores[chosen10], scores[best])
+    verdict = "tied with the best (95% CI includes 0)" if lo <= 0 <= hi or chosen10 == best else "worse than the best"
+    return ["", f"## Check: the {label} chosen with nDCG@10", "",
+            f"- Chosen with nDCG@10: {chosen10}: {OBJ} {scores[chosen10].mean():.4f}",
+            f"- Best by {OBJ}: {best}: {scores[best].mean():.4f}",
+            f"- Difference: {m:+.4f} [{lo:+.4f}, {hi:+.4f}] -> **{verdict}**"]
 
 
 def by_domain(bench, scores):
@@ -205,22 +221,24 @@ def step_bm25(bench):
         run = load_run(f)
         grid[params][q] = bench.metrics([run.get(t, []) for t in bench.tids])
     qs = sorted(next(iter(grid.values())))
-    # Objective: mean nDCG@10 over the query variants, so one (k1, b) serves every BM25 source.
-    obj = {p: np.mean([grid[p][q]["nDCG@10"] for q in qs], 0) for p in grid}
+    # Objective: mean nDCG over the query variants, so one (k1, b) serves every BM25 source.
+    obj = {p: np.mean([grid[p][q][OBJ] for q in qs], 0) for p in grid}
     held, chosen = cv_select(bench, obj)
-    ranked, rows, n_tied = near_best(obj, "mean nDCG@10")
+    ranked, rows, n_tied = near_best(obj, f"mean {OBJ}")
     default = DEFAULT_BM25
     lines = ["# BM25 k1/b grid", "",
-             f"Query variants: {', '.join(qs)}. Objective: mean nDCG@10 over these variants.", "",
-             "| k1, b | " + " | ".join(f"{q} nDCG@10" for q in qs) + " | " + " | ".join(f"{q} R@100" for q in qs) + " |",
+             f"Query variants: {', '.join(qs)}. Objective: mean {OBJ} over these variants.", "",
+             "| k1, b | " + " | ".join(f"{q} {OBJ}" for q in qs) + " | " + " | ".join(f"{q} R@100" for q in qs) + " |",
              "|---|" + "---|" * (2 * len(qs))]
     for p in ranked:
-        lines.append(f"| {p} | " + " | ".join(f"{grid[p][q]['nDCG@10'].mean():.4f}" for q in qs) + " | "
+        lines.append(f"| {p} | " + " | ".join(f"{grid[p][q][OBJ].mean():.4f}" for q in qs) + " | "
                      + " | ".join(f"{grid[p][q]['R@100'].mean():.4f}" for q in qs) + " |")
     lines += ["", "## Best configs vs the best one (paired bootstrap)", ""] + rows + [
         "", f"Configs statistically tied with the best: {n_tied} of {len(obj)}.",
         f"CV (choose on 4 folds, score 5th): held-out {held.mean():.4f}; chosen per fold: {chosen}.",
         f"Default {default}: {obj[default].mean():.4f}; best {ranked[0]} vs default: {fmt_boot(obj[ranked[0]], obj[default])}."]
+    if SUFFIX:
+        lines += vs_ndcg10_choice(json.loads((OUT / "bm25.json").read_text())["best"], obj, ranked[0], "BM25 setting")
     write("bm25", lines, {"best": ranked[0], "cv_heldout": held.mean(), "chosen_per_fold": chosen,
                           "scores": {p: float(v.mean()) for p, v in obj.items()}})
 
@@ -286,12 +304,12 @@ def step_fusion(bench, bm25_params):
     lines = [f"# Fusion sweep (BM25 params: {bm25_params})", "",
              f"Search: coordinate ascent over weights {WEIGHTS} per source, RRF k {RRF_K}, per-source depth {DEPTHS}; "
              f"{len(starts)} starting points. Selection by {N_FOLDS}-fold CV over conversations.", "",
-             "## Single sources (nDCG@10 / R@50 / R@100)", "", "| source | nDCG@10 | R@50 | R@100 |", "|---|---|---|---|"]
+             f"## Single sources ({OBJ} / R@50 / R@100)", "", f"| source | {OBJ} | R@50 | R@100 |", "|---|---|---|---|"]
     for n, c in singles.items():
         m = fusion.metrics(c)
-        lines.append(f"| {n} | {m['nDCG@10'].mean():.4f} | {m['R@50'].mean():.4f} | {m['R@100'].mean():.4f} |")
+        lines.append(f"| {n} | {m[OBJ].mean():.4f} | {m['R@50'].mean():.4f} | {m['R@100'].mean():.4f} |")
     data = {"bm25_params": bm25_params}
-    for metric in ("nDCG@10", "R@50"):
+    for metric in ((OBJ, "R@50") if not SUFFIX else (OBJ,)):
         held = np.zeros(len(bench.tids))
         chosen = []
         for f in range(N_FOLDS):
@@ -309,6 +327,10 @@ def step_fusion(bench, bm25_params):
                   "- Configs chosen per fold:"] + [f"  - {c}" for c in chosen]
         data[metric] = {"final": final, "final_score": m_final.mean(), "cv_heldout": held.mean(),
                         "hybrid5": m_h5.mean(), "dense_t5": m_d.mean(), "chosen_per_fold": chosen}
+        if SUFFIX:
+            c10 = json.loads((OUT / "fusion.json").read_text())["nDCG@10"]["final"]
+            lines += vs_ndcg10_choice("nDCG@10 choice", {"nDCG@10 choice": fusion.metrics(c10)[metric],
+                                                         "best": m_final}, "best", "fusion setting")
     write("fusion", lines, data)
 
 
@@ -397,9 +419,9 @@ def step_rerank(bench):
                     # Gold-rewrite queries are not available at test time: upper bound only, never selected.
                     target = upper if any(m.endswith("@gold") for m in models) else per_query
                     target[f"{pname} / {rname} / depth={depth} / alpha={alpha}"] = bench.metrics(ranked)
-    ndcg = {n: m["nDCG@10"] for n, m in per_query.items()}
+    ndcg = {n: m[OBJ] for n, m in per_query.items()}
     held, chosen = cv_select(bench, ndcg)
-    ranked_cfgs, rows, n_tied = near_best(ndcg, "nDCG@10", top=25)
+    ranked_cfgs, rows, n_tied = near_best(ndcg, OBJ, top=25)
     current = "hybrid5_orig / MiniLM-L6-v2@t5 / depth=50 / alpha=1.0"
     best = ranked_cfgs[0]
     lines = ["# Reranking sweep", "",
@@ -417,23 +439,25 @@ def step_rerank(bench):
         cands = [n for n in ndcg if pred(n)]
         return max(cands, key=lambda n: ndcg[n].mean()) if cands else None
 
-    lines += ["", "## Best config per reranker", "", "| reranker | best config | nDCG@10 | vs overall best |", "|---|---|---|---|"]
+    lines += ["", "## Best config per reranker", "", f"| reranker | best config | {OBJ} | vs overall best |", "|---|---|---|---|"]
     for rname in rerankers:
         n = best_where(lambda x: x.split(" / ")[1] == rname)
         if n is None:  # gold-query reranker: reported as the upper bound below
             continue
         lines.append(f"| {rname} | {n} | {ndcg[n].mean():.4f} | {fmt_boot(ndcg[n], ndcg[best])} |")
     if upper:
-        n = max(upper, key=lambda x: upper[x]["nDCG@10"].mean())
-        lines += ["", f"Upper bound, reranking with the gold rewrite as query: {n} = {upper[n]['nDCG@10'].mean():.4f} "
-                      f"(vs best {fmt_boot(upper[n]['nDCG@10'], ndcg[best])})"]
-    lines += ["", "## Best config per candidate pool", "", "| pool | best config | nDCG@10 |", "|---|---|---|"]
+        n = max(upper, key=lambda x: upper[x][OBJ].mean())
+        lines += ["", f"Upper bound, reranking with the gold rewrite as query: {n} = {upper[n][OBJ].mean():.4f} "
+                      f"(vs best {fmt_boot(upper[n][OBJ], ndcg[best])})"]
+    lines += ["", "## Best config per candidate pool", "", f"| pool | best config | {OBJ} |", "|---|---|---|"]
     for pname in pools:
         n = best_where(lambda x: x.split(" / ")[0] == pname)
         lines.append(f"| {pname} | {n} | {ndcg[n].mean():.4f} |")
     lines += ["", "## Top configs vs best (paired bootstrap)", ""] + rows
     lines += ["", "## Best config, all metrics", "", "| metric | value |", "|---|---|"]
     lines += [f"| {k} | {v.mean():.4f} |" for k, v in per_query[best].items()]
+    if SUFFIX:  # the candidate pools (and their cached reranker scores) are those built from the nDCG@10 fusion
+        lines += vs_ndcg10_choice(json.loads((OUT / "rerank.json").read_text())["best"], ndcg, best, "reranking setup")
     write("rerank", lines, {"best": best, "best_score": ndcg[best].mean(), "cv_heldout": held.mean(),
                             "chosen_per_fold": chosen, "n_tied": n_tied,
                             "scores": {n: float(v.mean()) for n, v in ndcg.items()}})
@@ -444,11 +468,17 @@ def main():
     ap.add_argument("step", choices=["bm25", "fusion", "pool", "rerank"])
     ap.add_argument("--input", default=str(ROOT / "data" / "taskA_dev_input.jsonl"))
     ap.add_argument("--bm25_params", default=None, help="e.g. k1=0.9_b=0.4 (default: best from the bm25 step)")
+    ap.add_argument("--metric", default="nDCG@10", choices=["nDCG@1", "nDCG@3", "nDCG@5", "nDCG@10"],
+                    help="selection metric; results of another metric go to <step>_ndcg<k>.*")
     a = ap.parse_args()
+    global OBJ, SUFFIX
+    OBJ, SUFFIX = a.metric, "" if a.metric == "nDCG@10" else "_" + a.metric.replace("@", "").lower()
+    if SUFFIX and a.step == "pool":
+        raise SystemExit("pool builds the reranker job's input; run it with nDCG@10 only")
     bench = Bench(a.input)
     params = a.bm25_params
     if params is None and a.step in ("fusion", "pool"):
-        f = OUT / "bm25.json"
+        f = OUT / f"bm25{SUFFIX}.json"
         params = json.loads(f.read_text())["best"] if f.exists() else DEFAULT_BM25
     {"bm25": lambda: step_bm25(bench), "fusion": lambda: step_fusion(bench, params),
      "pool": lambda: step_pool(bench, params), "rerank": lambda: step_rerank(bench)}[a.step]()

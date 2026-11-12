@@ -1,0 +1,30 @@
+{
+ "bm25_params": "k1=2.2_b=0.5",
+ "nDCG@5": {
+  "final": {
+   "w": {
+    "bm25@last": 2,
+    "bm25@weighted": 0.25,
+    "bm25@all": 0.5,
+    "bge-base@last": 3,
+    "bge-base@last2": 1.5,
+    "bge-base@weighted": 0.5,
+    "bge-base@all": 0.25,
+    "bge-base@t5": 3
+   },
+   "k": 10,
+   "depth": 50
+  },
+  "final_score": 0.39849956274925175,
+  "cv_heldout": 0.3874924447991247,
+  "hybrid5": 0.32056686091500675,
+  "dense_t5": 0.34766549251155293,
+  "chosen_per_fold": [
+   "{bge-base@all\u00d70.25, bge-base@last\u00d73, bge-base@last2\u00d72, bge-base@t5\u00d73, bge-base@weighted\u00d70.5, bm25@last\u00d71.5, bm25@last2\u00d71, bm25@t5\u00d70.25, bm25@weighted\u00d70.5} k=10 depth=100",
+   "{bge-base@all\u00d70.25, bge-base@last\u00d73, bge-base@last2\u00d71.5, bge-base@t5\u00d73, bge-base@weighted\u00d70.5, bm25@last\u00d72, bm25@last2\u00d70.25, bm25@weighted\u00d70.5} k=10 depth=50",
+   "{bge-base@last\u00d71, bge-base@last2\u00d70.5, bge-base@t5\u00d71.5, bge-base@weighted\u00d70.25, bm25@last\u00d71} k=10 depth=100",
+   "{bge-base@last\u00d73, bge-base@last2\u00d71.5, bge-base@t5\u00d73, bge-base@weighted\u00d70.5, bm25@all\u00d70.5, bm25@last\u00d71, bm25@weighted\u00d70.25} k=10 depth=100",
+   "{bge-base@all\u00d71, bge-base@last\u00d73, bge-base@last2\u00d72, bge-base@t5\u00d73, bge-base@weighted\u00d71, bm25@last\u00d73, bm25@last2\u00d70.25, bm25@weighted\u00d70.25} k=10 depth=100"
+  ]
+ }
+}

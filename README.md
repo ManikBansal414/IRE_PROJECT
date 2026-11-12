@@ -97,3 +97,29 @@ On a new test file: `python -m taska.run --input <test.jsonl> ... --write`.
 ~90 min, then runs `ada/run_pipeline.sbatch`), then `sbatch ada/extra_runs.sbatch` (MiniLM-reranked
 runs #13–#15). The tuned system: `sbatch ada/best_run.sbatch`. Account limits: 1 GPU, 10 CPUs, 6 h per job, only 1 submitted job at a time
 (so jobs cannot be chained with `--dependency`).
+
+Jobs run with `HF_HUB_OFFLINE=1`, so every model must be downloaded on the login node first (`ada/setup_env.sh`).
+Node `gnode066` had a broken CUDA setup (jobs fell back to the CPU); `best_run.sbatch` and `rb_alg.sbatch` now stop
+at once without a GPU, and `sbatch --exclude=gnode066 ...` avoids that node.
+
+Task A tuning (`results/tuning/`) is computed from caches made on ADA and analysed locally:
+`sbatch ada/tune_cache.sbatch` and `ada/tune_bm25grid2.sbatch` (runs and BM25 grid), `python -m taska.sweep bm25|fusion|pool`,
+`sbatch ada/tune_rerank.sbatch` (cross-encoder scores), `python -m taska.sweep rerank`; copy `work/cache/` between the two.
+
+## Tasks B and C (generation)
+
+Data: `mtrag-human/generation_tasks/` (`reference.jsonl` for Task B) and `scripts/evaluation/` of the benchmark repo,
+under `external/mt-rag-benchmark/`. Task C uses the Task A predictions in `results/best_system/`.
+
+Keys (git-ignored, never committed): Azure in `azure_api.txt` (or `$AZURE_OPENAI_API_KEY` + `$AZURE_OPENAI_ENDPOINT`).
+Every API answer is cached in `work/llm_cache/` and every paid call is logged in `work/llm_usage.jsonl`
+(`python -m taskb.llm --usage`); a copy and per-run summary are in `results/taskb/llm_usage.*`.
+
+RB_alg uses the official `run_algorithmic.py`, which needs packages that conflict with the main environment:
+- laptop (CPU, ~30 s per task): `python -m venv .venv && .venv/bin/pip install "evaluate==0.4.3" bert_score rouge-score
+  beautifulsoup4 lxml pandas pyyaml "transformers<5"` (plus CPU torch); `taskb.evaluate` uses `.venv/bin/python` for it.
+- ADA (GPU, ~17 min per full dev run): `bash ada/setup_eval_env.sh` once on the login node, then
+  `python -m taskb.evaluate --name <run> --prepare_alg` locally, copy `work/taskb_eval/*.merged.jsonl` to ADA,
+  `sbatch --exclude=gnode066 ada/rb_alg.sbatch`, and copy the `*.alg.jsonl` files back; `taskb.evaluate` then uses them.
+
+Commands for the reported runs are at the end of `results/BENCHMARKS.md`.

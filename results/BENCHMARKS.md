@@ -135,4 +135,5 @@ python -m taskb.llm --usage                                     # tokens and cos
 ```
 
 Prediction files are in `results/best_system/` (A) and `results/taskb/` (B: `mini_extractive`, C: `c_mini_extractive`).
-LLM cost of all Task B/C work, tuning included: $13.93 (Azure).
+LLM cost of all Task B/C work, tuning included: $13.93 (Azure); per-run breakdown in `results/taskb/llm_usage.md`,
+with the full call log in `results/taskb/llm_usage.jsonl`.
