@@ -106,6 +106,21 @@ Not covered (would need more GPU time):
 - **v2-m3 with the last-question query.** For MiniLM, the T5 + last pairing was the main win, so v2-m3 @last could help.
 - Other dense encoders (bge-large, e5) and an LLM query rewriter were not tested.
 
+## Does the choice depend on the cutoff? Re-selection with nDCG@5 — `*_ndcg5.md`
+
+The task page ranks Task A by nDCG without naming the cutoff, so every step was re-run with nDCG@5 as the
+selection metric, on the same caches and search (the reranking step reuses the candidate pools, whose
+cross-encoder scores are cached). Each row tests the configuration chosen with nDCG@10 against the nDCG@5 best:
+
+| step | chosen with nDCG@10 | its nDCG@5 | best by nDCG@5 | difference [95% CI] |
+|---|---|---|---|---|
+| BM25 | k1=2.2, b=0.5 | 0.2025 | the same | 0 |
+| Fusion | `tuned_ndcg` | 0.3938 | 0.3985 (re-tuned weights) | −0.0047 [−0.0110, +0.0015], tied |
+| Reranking | v2-m3@T5 + MiniLM-L6@last, depth 50, alpha 0.7 | 0.4513 | 0.4530 (+ MiniLM-L6@weighted, alpha 0.8) | −0.0018 [−0.0100, +0.0066], tied |
+
+At every step the nDCG@10 choice is the nDCG@5 best or statistically tied with it, so selecting on nDCG@5
+would not give a measurably better system. The reranking config is one of 46 of 6,160 tied with the nDCG@5 best.
+
 ## Reproduce
 
 ```bash
@@ -120,6 +135,8 @@ python -m taska.sweep pool          # -> work/cache/pool{50,100}.json, copy to A
 sbatch ada/tune_rerank.sbatch       # 7 cross-encoder caches, 2h31
 # local (after copying work/cache/rerank back)
 python -m taska.sweep rerank        # ~7 min
+# selection with nDCG@5 instead (results/tuning/*_ndcg5.*), ~20 min, local only
+for s in bm25 fusion rerank; do python -m taska.sweep $s --metric nDCG@5; done
 ```
 
 The recommended system is `python -m taska.run --preset best` (`sbatch ada/best_run.sbatch` on Ada).
