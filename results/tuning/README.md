@@ -1,6 +1,7 @@
 # Task A parameter tuning (run 2026-10-31 → 2026-11-01, Ada account cs4406.04)
 
-All numbers: MTRAG dev set, 777 scored questions (110 conversations). Metric for selection: nDCG@10.
+All numbers: MTRAG dev set, 777 scored questions (110 conversations). Metric for selection: nDCG@10
+(the official script may rank by a smaller cutoff; the chosen system is also best on nDCG@1/3/5, see `rerank.md`).
 
 ## Method
 

@@ -6,7 +6,7 @@ rewrites are removed from every system input. All prediction files pass the offi
 
 | Task | Metric | Score |
 |---|---|---|
-| A: retrieval | nDCG@10 | **0.5021** |
+| A: retrieval | nDCG@10 (nDCG@5) | **0.5021** (0.4513) |
 | B: generation with reference passages | harmonic mean of RL_F, RB_llm, RB_alg | **0.7160** |
 | C: generation with retrieved passages (top 5) | harmonic mean of RL_F, RB_llm, RB_alg | **0.6099** |
 
@@ -100,7 +100,10 @@ only 27% of unanswerable tasks get the expected "I don't know" reply.
 
 **Official parts.**
 - **Task A:** nDCG/Recall per domain, then averaged weighted by question count, as in `run_retrieval_eval.py`.
-  Only the 777 questions with relevant passages are scored.
+  Only the 777 questions with relevant passages are scored. The task page promises results at 1, 3, 5 and 10,
+  but the script in the benchmark repository currently reports cutoffs 1, 3 and 5 only, and the page does not
+  name the ranking cutoff. All selection here used nDCG@10; the final system is also the best run at every
+  other cutoff (nDCG@5 0.451 vs 0.386 for the mid-submission system), so the choice does not depend on it.
 - **RB_alg:** the official `run_algorithmic.py`, unchanged: harmonic mean of BERTScore recall and ROUGE-L
   against the reference answer, and BERTScore precision against the passages (`deberta-xlarge-mnli`).
 - **RB_llm and the IDK check:** the official RAD-Bench and IDK judge prompts from `judge_utils.py`.

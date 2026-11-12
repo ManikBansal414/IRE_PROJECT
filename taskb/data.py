@@ -6,7 +6,8 @@ from taska.data import BENCH, COLLECTION_TO_DOMAIN, read_jsonl
 GEN = BENCH / "mtrag-human" / "generation_tasks"
 REFERENCE = GEN / "reference.jsonl"
 # Fields of the benchmark file that are not given at evaluation time.
-GOLD_FIELDS = {"targets", "Answerability", "answerability", "Question Type", "Multi-Turn", "enrichments", "predictions"}
+GOLD_FIELDS = {"targets", "Answerability", "answerability", "Question Type", "Multi-Turn", "enrichments", "predictions",
+               "Standalone Type", "Ambiguity Type", "Validity"}
 CONTEXT_FIELDS = ("document_id", "text", "title", "score")  # drops the human relevance feedback and query metadata
 
 

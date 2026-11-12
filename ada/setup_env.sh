@@ -35,7 +35,9 @@ python -c "import torch, bm25s, faiss, sentence_transformers, pytrec_eval; print
 echo "== models =="
 python - <<'EOF'
 from huggingface_hub import snapshot_download as s
-for m in ["BAAI/bge-base-en-v1.5", "BAAI/bge-reranker-base", "cross-encoder/ms-marco-MiniLM-L6-v2"]:
+# bge-reranker-v2-m3 and MiniLM-L12 are needed by ada/best_run.sbatch and ada/tune_rerank.sbatch (jobs run offline).
+for m in ["BAAI/bge-base-en-v1.5", "BAAI/bge-reranker-base", "BAAI/bge-reranker-v2-m3",
+          "cross-encoder/ms-marco-MiniLM-L6-v2", "cross-encoder/ms-marco-MiniLM-L12-v2"]:
     print(s(m, allow_patterns=["*.json", "*.txt", "*.model", "model.safetensors", "1_Pooling/*", "sentencepiece.bpe.model"]))
 EOF
 echo "SETUP DONE"
