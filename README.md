@@ -1,5 +1,8 @@
 # MTRAGEval (SemEval-2026 Task 8) — Task A: Retrieval
 
+The final systems for Tasks A, B and C and their scores are in [results/BENCHMARKS.md](results/BENCHMARKS.md);
+this file documents the Task A development runs.
+
 Given a multi-turn conversation ending in a user question, return the 10 most relevant passages
 from the domain corpus (ClapNQ, Cloud, FiQA, Govt). Ranked by nDCG; scored on answerable questions only.
 
@@ -21,12 +24,14 @@ from the domain corpus (ClapNQ, Cloud, FiQA, Govt). Ranked by nDCG; scored on an
 | 12 | #11 + bge-reranker-base rerank of top 100 | 0.288 | 0.287 | 0.317 | 0.360 | 0.455 |
 | 13 | RRF hybrid: dense #9 + #8, BM25 #4 + #5 + #1 | 0.306 | 0.282 | 0.312 | 0.353 | 0.442 |
 | 14 | #9 + MiniLM rerank of top 50 | 0.378 | 0.350 | 0.384 | 0.428 | 0.522 |
-| **15** | **#13 + MiniLM rerank of top 50 (best)** | **0.391** | **0.354** | **0.386** | **0.432** | **0.521** |
+| 15 | #13 + MiniLM rerank of top 50 (mid-submission system) | 0.391 | 0.354 | 0.386 | 0.432 | 0.521 |
+| **16** | **Tuned pipeline: 8-source weighted RRF (BM25 k1=2.2, b=0.5; k=5) + bge-reranker-v2-m3 & MiniLM ensemble (final; `--preset best`, [results/tuning/README.md](results/tuning/README.md))** | **0.456** | **0.416** | **0.451** | **0.502** | **0.603** |
 | — | *BM25 on gold human rewrites (upper bound only, not available at test time)* | 0.203 | 0.196 | 0.216 | 0.254 | 0.330 |
 
 Per-domain numbers: [results/results_log.md](results/results_log.md) and `results/*.metrics.json`.
-Submission-format output for the best system (#15): `results/hybrid5__rr_minilm50.predictions.jsonl`;
-BM25-only (#7): `results/bm25rrf3__rr_minilm50.predictions.jsonl`. Both pass the official
+Submission-format output for the final system (#16): `results/best_system/best.predictions.jsonl`;
+mid-submission system (#15): `results/hybrid5__rr_minilm50.predictions.jsonl`;
+BM25-only (#7): `results/bm25rrf3__rr_minilm50.predictions.jsonl`. All pass the official
 `format_checker.py --mode retrieval_taska`.
 
 Observations:
@@ -34,9 +39,11 @@ Observations:
 - The T5 rewrite helps both retrievers; the "weighted history" query helps BM25 but hurts dense.
 - RRF fusion by itself does not beat the best single dense run, but the fused candidate pool
   gives the reranker the most to work with (#15 > #14).
-- bge-reranker-base lowered scores here, while the smaller MS MARCO MiniLM cross-encoder adds ~+0.04–0.12.
+- bge-reranker-base did not help in run #12 (0.362 → 0.360), but that run used a different pool, depth 100 and no
+  score interpolation, so it is not a fair comparison; in the tuning sweep it reaches 0.458 (results/tuning/rerank.md).
+  The MS MARCO MiniLM cross-encoder adds +0.04–0.12 on the same pools.
 
-Rows #8–#15 were run on ADA (GPU); on the laptop CPU, dense encoding ran at ~8 passages/s
+Rows #8–#16 were run on ADA (GPU); on the laptop CPU, dense encoding ran at ~8 passages/s
 (~12 h for the 366k passages) vs ~68 passages/s on a GTX 1080 Ti.
 
 ## Pipeline
@@ -50,12 +57,14 @@ conversation ──► query variants ──► BM25 / dense retrieval (top 100 
 
 - `taska/queries.py` — query construction from the conversation (no gold info used).
 - `taska/rewrite.py` — conversational query rewriting with `castorini/t5-base-canard`.
-- `taska/bm25.py` — BM25 (bm25s, k1=0.9, b=0.4, English stemming + stopwords), one index per domain.
+- `taska/bm25.py` — BM25 (bm25s, English stemming + stopwords), one index per domain; k1=0.9, b=0.4 in rows
+  #1–#15, k1=2.2, b=0.5 (tuned) in the `best` preset.
 - `taska/dense.py` — sentence-transformers encoder + exact FAISS search; resumable sharded encoding.
-- `taska/fusion.py` — Reciprocal Rank Fusion (k=60).
+- `taska/fusion.py` — (weighted) Reciprocal Rank Fusion; k=60 and equal weights in rows #6–#15, k=5 and tuned weights in the `best` preset.
 - `taska/rerank.py` — cross-encoder reranking.
 - `taska/evaluate.py` — nDCG/Recall @1,3,5,10 via pytrec_eval, same aggregation as the official script.
 - `taska/run.py` — runs a pipeline, scores it, writes official-format predictions.
+- `taska/cache.py`, `taska/sweep.py` — cached runs and the CPU-side parameter sweeps behind results/tuning/.
 
 Evaluation-time inputs contain no metadata (answerability, question type, rewrites), so
 `taska/data.py` strips those fields on load. The gold rewrites are used only for the upper-bound row.

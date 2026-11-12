@@ -11,7 +11,7 @@ Examples:
   python -m taska.run --preset best --write      # tuned system, see results/tuning/README.md
   python -m taska.run --sources bm25@last
   python -m taska.run --sources bm25@file:data/rewrites_t5canard.jsonl dense:BAAI/bge-small-en-v1.5@file:data/rewrites_t5canard.jsonl \
-      --rerank cross-encoder/ms-marco-MiniLM-L-6-v2 --rerank_query file:data/rewrites_t5canard.jsonl --write
+      --rerank cross-encoder/ms-marco-MiniLM-L6-v2 --rerank_query file:data/rewrites_t5canard.jsonl --write
 """
 import argparse
 import json

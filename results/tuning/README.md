@@ -17,7 +17,8 @@ All numbers: MTRAG dev set, 777 scored questions (110 conversations). Metric for
 
 ## 1. BM25 (k1, b) — `bm25.md`
 
-Grid: k1 ∈ {0.6, 0.9, 1.2, 1.5, 1.8, 2.2, 2.6, 3.0} × b ∈ {0.3, 0.4, 0.5, 0.6, 0.75} (33 points),
+Grid: k1 ∈ {0.6, 0.9, 1.2, 1.5, 1.8, 2.2, 2.6, 3.0} × b ∈ {0.3, 0.4, 0.5, 0.6, 0.75}; 33 of the 40 points were run
+(b = 0.5 only for k1 ≥ 1.5, b = 0.75 only for k1 ≤ 1.5),
 objective = mean nDCG@10 over the 5 query variants.
 
 | setting | mean nDCG@10 |
@@ -88,7 +89,9 @@ min-max-normalised scores → final = 0.7·CE + 0.3·minmax(fusion score) → to
 
 - **Gain: +0.070 nDCG@10** [+0.055, +0.085], p<0.001.
 - **CV held-out = 0.5021:** all 5 folds independently chose this exact config, so the choice does not depend on which questions it was tuned on.
-- It is statistically tied with the gold-rewrite upper bound (0.4964), so a better query rewriter (e.g. an LLM) is unlikely to add much on top.
+- The gold-rewrite figure (0.4964) was measured with a single MiniLM-L6 reranker, so it is an upper bound for that
+  reranker only, not for the two-query ensemble (which scores above it). Whether an LLM query rewriter would add
+  anything on top of the ensemble was not measured.
 
 ## How close to best is this?
 

@@ -23,7 +23,8 @@ These go to two retrievers:
 - BM25 (`bm25s`, k1 = 2.2, b = 0.5);
 - dense retrieval (`BAAI/bge-base-en-v1.5`, FAISS).
 
-Eight ranked lists are fused with weighted RRF (k = 5), dense weighted 2–3× over BM25. The top 50 are then
+Eight of the resulting ten ranked lists (BM25 on the T5 rewrite and dense on all questions get weight 0) are fused
+with weighted RRF (k = 5), dense weighted 2–3× over BM25. The top 50 are then
 reranked by `bge-reranker-v2-m3` (T5-rewrite query) and `ms-marco-MiniLM-L6-v2` (last-question query), whose
 min-max-normalised scores are averaged. Final score = 0.7 × reranker + 0.3 × fusion; top 10 returned.
 

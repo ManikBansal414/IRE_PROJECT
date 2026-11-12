@@ -6,7 +6,7 @@ import Stemmer
 
 from .data import WORK, load_corpus
 
-K1, B = 0.9, 0.4  # bm25s defaults; tuned on dev: k1=2.2, b=0.5 (results/tuning/bm25.md)
+K1, B = 0.9, 0.4  # Anserini defaults (bm25s itself defaults to 1.5, 0.75); tuned on dev: k1=2.2, b=0.5 (results/tuning/bm25.md)
 _stemmer = Stemmer.Stemmer("english")
 _cache = {}
 

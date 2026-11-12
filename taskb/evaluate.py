@@ -1,4 +1,5 @@
-"""Score Task B predictions like the official script (benchmark scripts/evaluation), with the judges on Groq.
+"""Score Task B predictions like the official script (benchmark scripts/evaluation), with an LLM judge
+(gpt-4.1-mini on Azure by default; Groq models as a cross-check).
 
   RB_alg  official code, run unchanged (run_algorithmic.py): harmonic mean of BERTScore recall and ROUGE-L against
           the reference answer and BERTScore precision against the passages
