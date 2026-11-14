@@ -45,9 +45,9 @@ from judge_utils import (extract_conversation, extract_rating, first_token_idk, 
 
 OUT = ROOT / "results" / "taskb"
 TMP = WORK / "taskb_eval"
-# The official metric code needs evaluate/bert_score, kept in their own environment (python -m venv .venv;
-# .venv/bin/pip install evaluate==0.4.3 bert_score rouge-score beautifulsoup4 lxml pandas pyyaml "transformers<5").
-EVAL_PYTHON = ROOT / ".venv" / "bin" / "python"
+# The official metric code needs evaluate/bert_score, kept in their own environment (python -m venv .venv-eval;
+# .venv-eval/bin/pip install evaluate==0.4.3 bert_score rouge-score beautifulsoup4 lxml pandas pyyaml "transformers<5").
+EVAL_PYTHON = ROOT / ".venv-eval" / "bin" / "python"
 JUDGE, JUDGE_PROVIDER = "gpt-4.1-mini", "azure"
 METRICS = ("RL_F", "RB_llm", "RB_alg")
 NONANSWERABLE = {"UNANSWERABLE", "CONVERSATIONAL"}

@@ -116,8 +116,8 @@ Every API answer is cached in `work/llm_cache/` and every paid call is logged in
 (`python -m taskb.llm --usage`); a copy and per-run summary are in `results/taskb/llm_usage.*`.
 
 RB_alg uses the official `run_algorithmic.py`, which needs packages that conflict with the main environment:
-- laptop (CPU, ~30 s per task): `python -m venv .venv && .venv/bin/pip install "evaluate==0.4.3" bert_score rouge-score
-  beautifulsoup4 lxml pandas pyyaml "transformers<5"` (plus CPU torch); `taskb.evaluate` uses `.venv/bin/python` for it.
+- laptop (CPU, ~30 s per task): `python -m venv .venv-eval && .venv-eval/bin/pip install "evaluate==0.4.3" bert_score rouge-score
+  beautifulsoup4 lxml pandas pyyaml "transformers<5"` (plus CPU torch); `taskb.evaluate` uses `.venv-eval/bin/python` for it (kept apart from the main `.venv`).
 - ADA (GPU, ~17 min per full dev run): `bash ada/setup_eval_env.sh` once on the login node, then
   `python -m taskb.evaluate --name <run> --prepare_alg` locally, copy `work/taskb_eval/*.merged.jsonl` to ADA,
   `sbatch --exclude=gnode066 ada/rb_alg.sbatch`, and copy the `*.alg.jsonl` files back; `taskb.evaluate` then uses them.
